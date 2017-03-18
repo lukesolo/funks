@@ -77,6 +77,9 @@ const service = (name, action) => (...args) => new ServiceCall(name, action, arg
 const sync = f => (...args) => new Sync(f, args);
 const iff = (...args) => new Iff(...args);
 
-module.exports = {lift, service, sync, iff,
+const services = new Map();
+const _register = m => m.forEach((value, key) => services.set(key, value));
+
+module.exports = {lift, service, sync, iff, isPure, services,
     // Убрать из публичных
-    ServiceCall, Lifted, Sync, Iff};
+    ServiceCall, Lifted, Sync, Iff, _register};
