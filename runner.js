@@ -28,18 +28,7 @@ const iff = (node, context) => {
     });
 };
 
-const cache = f => (node, context) => {
-    if (context.p.has(node)) {
-        return context.p.get(node);
-    }
-
-    const res = f(node, context);
-
-    context.p.set(node, res);
-    return res;
-}
-
-function next(node, context) {
+const _next = (node, context) => {
     if (node instanceof Lifted) {
         return lifted(node, context);
     }
@@ -54,6 +43,21 @@ function next(node, context) {
     }
     return node;
 };
+
+function next(node, context) {
+    if (isPure(node)) {
+        return _next(node, context);
+    }
+
+    if (context.p.has(node)) {
+        return context.p.get(node);
+    }
+
+    const res = _next(node, context);
+
+    context.p.set(node, res);
+    return res;
+}
 
 const walkObject = (node, context) => {
     const res = {};
@@ -70,13 +74,11 @@ const run = node => {
         p: new Map(),
         service: (name, action) => (...args) => services.get(`${name}.${action}`)(...args),
     }
-    const n = cache(next);
 
     if (isPure(node)) {
         return walkObject(node, context);
     }
-    const result = n(node, context);
-    return result;
+    return next(node, context);
 };
 
 module.exports = {run};
