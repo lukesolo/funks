@@ -1,6 +1,6 @@
 'use strict';
 
-const {isPure, services, ServiceCall, Lifted, Sync, Iff} = require('./builder');
+const {isPure, services, ServiceCall, Lifted, Sync, Iff, OnFail} = require('./builder');
 
 const lifted = (node, context) => Promise.resolve(node.value);
 
@@ -28,6 +28,14 @@ const iff = (node, context) => {
     });
 };
 
+const onFail = (node, context) => {
+    const promise = next(node.expr, context);
+    return promise.catch(err => {
+        node.callback(err);
+        return node.def;
+    });
+};
+
 const _next = (node, context) => {
     if (node instanceof Lifted) {
         return lifted(node, context);
@@ -40,6 +48,9 @@ const _next = (node, context) => {
     }
     if (node instanceof Iff) {
         return iff(node, context);
+    }
+    if (node instanceof OnFail) {
+        return onFail(node, context);
     }
     return node;
 };

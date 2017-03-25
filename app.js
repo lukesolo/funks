@@ -3,6 +3,7 @@
 const {_register} = require('./builder');
 const {walkObject} = require('./visualize');
 const trading = require('./trading');
+const failure = require('./failure');
 const {run} = require('./runner');
 
 _register(new Map([
@@ -21,3 +22,4 @@ const tree = trading('argument: itemId', 'argument: userId');
 
 // console.log(walkObject(tree));
 run(trading(1, 2)).then(console.log).catch(console.log);
+run(failure(0)).then(console.log).catch(console.log);

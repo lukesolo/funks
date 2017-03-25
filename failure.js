@@ -7,10 +7,16 @@ const getUser = service('users', 'get');
 
 const logOnFail = onFail(console.log);
 
-const item = lift((itemId) => {
-    const publication = getPublication(itemId);
+const zero = sync(x => x === 0);
+
+const item = lift(itemId => {
+    const publication =
+        iff(zero(itemId), null)
+        .elsee(getPublication(itemId));
     const ownerId = sync(x => x.ownerId)(publication);
-    const owner = logOnFail(getUser(ownerId), {myDefaultValue: 1});
+    const owner = logOnFail(getUser(ownerId), {empty: true});
 
     return {publication, owner};
 });
+
+module.exports = item;

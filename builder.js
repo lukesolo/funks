@@ -51,6 +51,14 @@ class Iff {
     }
 }
 
+class OnFail {
+    constructor (expr, def, callback) {
+        this.expr = expr;
+        this.def = def;
+        this.callback = callback;
+    }
+}
+
 // const curriedSync = f => (...args) => new Sync(f, args);
 // const sync = (f, ...args) => args.length ? curriedSync(f)(...args) : curriedSync(f);
 
@@ -76,10 +84,11 @@ const lift = f => (...args) => f(...args.map(liftValue));
 const service = (name, action) => (...args) => new ServiceCall(name, action, args);
 const sync = f => (...args) => new Sync(f, args);
 const iff = (...args) => new Iff(...args);
+const onFail = callback => (expr, def) => new OnFail(expr, def, callback);
 
 const services = new Map();
 const _register = m => m.forEach((value, key) => services.set(key, value));
 
-module.exports = {lift, service, sync, iff, isPure, services,
+module.exports = {lift, service, sync, iff, onFail, isPure, services,
     // Убрать из публичных
-    ServiceCall, Lifted, Sync, Iff, _register};
+    ServiceCall, Lifted, Sync, Iff, OnFail, _register};
