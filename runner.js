@@ -16,16 +16,20 @@ const serviceCall = (node, context) => {
 };
 
 const iff = (node, context) => {
-    const preds = node.cases.filter(c => c.pred)
-        .map(c => next(c.pred, context));
+    const ifs = node.cases.filter(c => c.pred);
+    const preds = ifs.map(c => next(c.pred, context));
+    const ifCount = ifs.length;
 
-    return Promise.all(preds).then(preds => {
-        let index = preds.findIndex(p => p);
-        if (index === -1) {
-            index = node.cases.length - 1;
+    const chain = index => {
+        if (index >= ifCount) {
+            return next(node.cases[index].result, context);
         }
-        return next(node.cases[index].result, context);
-    });
+        return preds[index].then(pred =>
+            pred
+                ? next(node.cases[index].result, context)
+                : chain(index + 1));
+    }
+    return chain(0);
 };
 
 const onFail = (node, context) => {

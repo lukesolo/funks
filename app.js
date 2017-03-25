@@ -21,5 +21,7 @@ _register(new Map([
 const tree = trading('argument: itemId', 'argument: userId');
 
 // console.log(walkObject(tree));
+// run(trading(1, 0)).then(console.log).catch(console.log);
+// run(trading(1, 10)).then(console.log).catch(console.log);
 run(trading(1, 2)).then(console.log).catch(console.log);
 run(failure(0)).then(console.log).catch(console.log);
