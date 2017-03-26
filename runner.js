@@ -1,6 +1,6 @@
 'use strict';
 
-const {isPure, services, ServiceCall, Lifted, Sync, Iff, OnFail} = require('./builder');
+const {isPure, services, ServiceCall, Lifted, Sync, Or, OnFail} = require('./builder');
 
 const lifted = (node, context) => Promise.resolve(node.value);
 
@@ -15,19 +15,18 @@ const serviceCall = (node, context) => {
     return Promise.all(promises).then(args => service(...args));
 };
 
-const iff = (node, context) => {
-    const ifs = node.cases.filter(c => c.pred);
-    const preds = ifs.map(c => next(c.pred, context));
-    const ifCount = ifs.length;
+const or = (node, context) => {
+    const ors = node.cases.filter(c => c.pred);
+    const preds = ors.map(c => next(c.pred, context));
+    const orCount = ors.length;
 
     const chain = index => {
-        if (index >= ifCount) {
+        if (index >= orCount) {
             return next(node.cases[index].result, context);
         }
-        return preds[index].then(pred =>
-            pred
-                ? next(node.cases[index].result, context)
-                : chain(index + 1));
+        return preds[index].then(pred => pred
+            ? next(node.cases[index].result, context)
+            : chain(index + 1));
     }
     return chain(0);
 };
@@ -50,8 +49,8 @@ const _next = (node, context) => {
     if (node instanceof ServiceCall) {
         return serviceCall(node, context);
     }
-    if (node instanceof Iff) {
-        return iff(node, context);
+    if (node instanceof Or) {
+        return or(node, context);
     }
     if (node instanceof OnFail) {
         return onFail(node, context);

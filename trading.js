@@ -1,6 +1,6 @@
 'use strict';
 
-const {lift, service, sync, iff} = require('./builder');
+const {lift, service, sync, or} = require('./builder');
 
 const getPublication = service('publications', 'forItem');
 const getUser = service('users', 'get');
@@ -30,12 +30,12 @@ const trading = lift((itemId, userId) => {
     const isGuest = sync(id => id === 0)(userId);
     const isOwner = sync((userId, ownerId) => userId === ownerId)(userId, ownerId);
 
-    const nextPrice = iff(isOwner, undefined)
-        .elsee(getNextPrice(itemId));
+    const nextPrice = or(isOwner, undefined)
+        .def(getNextPrice(itemId));
 
-    const text = iff(isGuest, guestText())
-        .iff(isOwner, ownerText(userId))
-        .elsee(userText(userId));
+    const text = or(isGuest, guestText())
+        .or(isOwner, ownerText(userId))
+        .def(userText(userId));
 
     return {itemId, userId, bidIds, deletedBidsCount, nextPrice, text};
 });

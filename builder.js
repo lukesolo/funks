@@ -28,24 +28,24 @@ class Def {
     }
 }
 
-class Cas {
+class Case {
     constructor (pred, result) {
         this.pred = pred;
         this.result = result;
     }
 }
 
-class Iff {
+class Or {
     constructor (pred, result) {
-        this.cases = [new Cas(pred, result)];
+        this.cases = [new Case(pred, result)];
     }
 
-    iff (pred, result) {
-        this.cases.push(new Cas(pred, result));
+    or (pred, result) {
+        this.cases.push(new Case(pred, result));
         return this;
     }
 
-    elsee (result) {
+    def (result) {
         this.cases.push(new Def(result));
         return this;
     }
@@ -72,7 +72,7 @@ const isPure = v => {
     if (v instanceof Sync) {
         return false;
     }
-    if (v instanceof Iff) {
+    if (v instanceof Or) {
         return false;
     }
     return true;
@@ -83,12 +83,12 @@ const liftValue = v => isPure(v) ? new Lifted(v) : v;
 const lift = f => (...args) => f(...args.map(liftValue));
 const service = (name, action) => (...args) => new ServiceCall(name, action, args);
 const sync = f => (...args) => new Sync(f, args);
-const iff = (...args) => new Iff(...args);
+const or = (...args) => new Or(...args);
 const onFail = callback => (expr, def) => new OnFail(expr, def, callback);
 
 const services = new Map();
 const _register = m => m.forEach((value, key) => services.set(key, value));
 
-module.exports = {lift, service, sync, iff, onFail, isPure, services,
+module.exports = {lift, service, sync, or, onFail, isPure, services,
     // Убрать из публичных
-    ServiceCall, Lifted, Sync, Iff, OnFail, _register};
+    ServiceCall, Lifted, Sync, Or, OnFail, _register};
