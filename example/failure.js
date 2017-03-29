@@ -1,6 +1,6 @@
 'use strict';
 
-const {lift, service, sync, or, onFail} = require('./builder');
+const {lift, service, sync, or, onFail} = require('../lib/builder');
 
 const getPublication = service('publications', 'forItem');
 const getUser = service('users', 'get');

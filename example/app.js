@@ -1,10 +1,11 @@
 'use strict';
 
-const {_register} = require('./builder');
-const {walkObject} = require('./visualize');
+const {_register} = require('../lib/builder');
+const {walkObject} = require('../lib/visualize');
+const {run} = require('../lib/runner');
+
 const trading = require('./trading');
 const failure = require('./failure');
-const {run} = require('./runner');
 
 _register(new Map([
     ['publications.forItem', id => Promise.resolve({id, ownerId: 10, publicationId: 100})],
@@ -22,7 +23,7 @@ _register(new Map([
 const failureTree = failure('argument: itemId');
 
 // console.log(walkObject(tradingTree));
-// console.log(walkObject(failureTree));
+console.log(walkObject(failureTree));
 // run(trading(1, 0)).then(console.log).catch(console.log);
 // run(trading(1, 10)).then(console.log).catch(console.log);
 // run(trading(1, 2)).then(console.log).catch(console.log);
