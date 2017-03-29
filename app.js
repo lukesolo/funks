@@ -18,10 +18,12 @@ _register(new Map([
     ['someText.for', (role, id) => Promise.resolve(`Text for: ${role} with id: ${id}`)],
 ]));
 
-const tree = trading('argument: itemId', 'argument: userId');
+// const tradingTree = trading('argument: itemId', 'argument: userId');
+const failureTree = failure('argument: itemId');
 
-// console.log(walkObject(tree));
+// console.log(walkObject(tradingTree));
+// console.log(walkObject(failureTree));
 // run(trading(1, 0)).then(console.log).catch(console.log);
 // run(trading(1, 10)).then(console.log).catch(console.log);
-run(trading(1, 2)).then(console.log).catch(console.log);
-run(failure(0)).then(console.log).catch(console.log);
+// run(trading(1, 2)).then(console.log).catch(console.log);
+// run(failure(0)).then(console.log).catch(console.log);
