@@ -1,6 +1,6 @@
 'use strict';
 
-const {lift, service, sync, iff, Lifted, Sync, Iff} = require('./lib/builder');
+const {lift, service, sync, iff, Lifted, Sync, ServiceCall, Iff} = require('./lib/builder');
 const {walkObject} = require('./lib/visualize');
 
 // const simple = lift((userId, itemId) => {
@@ -13,27 +13,53 @@ const {walkObject} = require('./lib/visualize');
 //     return text;
 // });
 
+const isPromise = p => p instanceof Object && 'then' in p;
+
+const getItem = service('item', 'get');
+const getUser = service('user', 'get');
+
 const simple = lift((userId, itemId) => {
-    const good = sync(id => id !== 0)(itemId);
-    const eq = sync((userId, itemId) => userId === itemId)(userId, itemId);
-    return eq;
+    const item = getItem(itemId);
+    const user = getUser(userId);
+    const type = sync(x => x.type)(user);
+    const hasType = sync((user, type) => user.type === type.a())(user, type);
+
+    const good = sync(item => item.id > 0)(item);
+    const eq = sync((item, user) => item.id === user.id)(item, user);
+    return hasType;
 });
 
 const _r = value => () => value;
+const _call = (controller, action, args) => ({services}) => services(`${controller}/${action}`, args);
 
 const _b = (plan, callback) => context => {
     const result = plan(context);
-    const next = callback(result);
-    return next(context);
+    if (isPromise(result)) {
+        return result.then(r => callback(r)(context));
+    }
+
+    return callback(result)(context);
 } 
 
-const all = values => context => values.map(v => factory(v)(context));
+// const all = values => context => values.map(v => factory(v)(context));
+const all = values => context => {
+    const arr = values.map(v => factory(v)(context));
+
+    if (arr.some(e => isPromise(e))) {
+        return Promise.all(arr);
+    }
+    return arr;
+};
 
 const _lifted = ({value: index}) => ({args}) => args[index];
 // const _sync = ({f, args: children}) => context => f(...all(children)(context));
-const _sync = ({f, args: children}) =>
-    _b(all(children), values =>
+const _sync = ({f, args: unresolved}) =>
+    _b(all(unresolved), values =>
     _r(f(...values)));
+
+const _service = ({name, action, args: unresolved}) =>
+    _b(all(unresolved), args =>
+    _call(name, action, args));
 
 function factory (node) {
     if (node instanceof Lifted) {
@@ -41,6 +67,9 @@ function factory (node) {
     }
     if (node instanceof Sync) {
         return _sync(node);
+    }
+    if (node instanceof ServiceCall) {
+        return _service(node);
     }
 };
 
@@ -51,8 +80,16 @@ const makePlan = comp => {
     return plan;
 };
 
+const _s = new Map([
+    ['item/get', id => Promise.resolve({id, type: 'Item'})],
+    ['user/get', id => Promise.resolve({id, type: 'User'})],
+]);
+const services = (key, args) => {
+    return _s.get(key)(...args);
+}
+
 const run = (plan, ...args) => {
-    const promise = plan({args});
+    const promise = plan({args, services});
     if (promise instanceof Object && 'then' in promise) {
         return promise;
     }
@@ -61,4 +98,4 @@ const run = (plan, ...args) => {
 
 const plan = makePlan(simple);
 
-run(plan, 1, 2).then(console.log);
+run(plan, 1, 1).then(console.log).catch(console.log);
