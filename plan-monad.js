@@ -1,6 +1,6 @@
 'use strict';
 
-const {lift, service, sync, iff, Lifted, Sync, ServiceCall, Iff} = require('./lib/builder');
+const {lift, service, sync, or, Lifted, Sync, ServiceCall, Or} = require('./lib/builder');
 const {walkObject} = require('./lib/visualize');
 
 const isPromise = p => p instanceof Object && 'then' in p;
@@ -16,10 +16,16 @@ const simple = lift((userId, itemId) => {
 
     const good = sync(item => item.id > 0)(item);
     const eq = sync((item, user) => item.id === user.id)(item, user);
-    return eq;
+    const text = or(eq, 'Равно')
+        .or(good, 'Хорошо')
+        // .def(type);
+
+    return text;
 });
 
 /* --------------------------------------- */
+
+// const Nothing = Object.create(null);
 
 const _r = value => () => value;
 
@@ -36,7 +42,6 @@ const _b = node => (deps, compute) => {
 
         if (computation === undefined) {
             const args = deps(context);
-            console.log(args);
             if (isPromise(args)) {
                 computation = args.then(a => compute(a));
                 chain = comp => comp.then(chaining);
@@ -57,6 +62,22 @@ const all = values => {
 
     return context => Promise.all(values.map(value => value(context)))
 };
+
+const firstIndex = values => context => {
+    const results = values.map(value => value(context));
+    
+    const choose = index => {
+        if (index >= results.length) {
+            return -1;
+        }
+        const result = results[index];
+        if (isPromise(result)) {
+            return result.then(r => r ? index : choose(index + 1));
+        }
+        return result ? index : choose(index + 1);
+    }
+    return choose(0);
+}
 
 const _lifted = node => {
     const index = node.value;
@@ -86,6 +107,15 @@ const _service = (node, builder) => {
     return _b(node)(all(monads), results => _r(call(...results)));
 };
 
+const _or = (node, builder) => {
+    const {cases} = node;
+    const preds = cases.filter(c => c.pred).map(c => builder.next(c.pred));
+    const results = cases.map(c => builder.next(c.result));
+    const def = results.length > preds.length ? results[results.length - 1] : builder.next(undefined);
+
+    return _b(node)(firstIndex(preds), index => index === -1 ? def : results[index]);
+};
+
 /* --------------------------------------- */
 
 const _s = new Map([
@@ -103,7 +133,10 @@ const choose = node => {
     if (node instanceof ServiceCall) {
         return _service;
     }
-    throw `тип не поддерживается: ${node}`;
+    if (node instanceof Or) {
+        return _or;
+    }
+    return _r;
 }
 
 function next (node) {
@@ -135,7 +168,12 @@ const run = (plan, ...input) => {
     const context = {input, results: new Map()};
     const promise = plan(context);
     if (isPromise(promise)) {
-        // promise.catch(() => null).then(() => console.dir(context, {depth: null}))
+        // promise.catch(() => null).then(() => {
+        //     for (const [key, value] of context.results) {
+        //         console.log(`${key.constructor.name}`);
+        //         console.dir(value, {depth: null});
+        //     }
+        // });
         return promise;
     }
     return Promise.resolve(promise);
@@ -144,4 +182,4 @@ const run = (plan, ...input) => {
 const plan = build(simple);
 // console.log(plan.toString());
 
-run(plan, 10, 10).then(console.log).catch(console.log);
+run(plan, 5, 0).then(console.log).catch(console.log);
