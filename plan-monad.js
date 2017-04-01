@@ -16,14 +16,14 @@ const simple = lift((userId, itemId) => {
 
     const good = sync(item => item.id > 0)(item);
     const eq = sync((item, user) => item.id === user.id)(item, user);
-    return good;
+    return eq;
 });
 
 // const _call = (controller, action, args) => ({services}) => services(`${controller}/${action}`, args);
 
 /* --------------------------------------- */
 
-const Nothing = Object.create(null);
+// const Nothing = Object.create(null);
 
 const nodeResult = ({input}, node, result) => ({context: {input, node}, result});
 
@@ -31,62 +31,82 @@ const nodeResult = ({input}, node, result) => ({context: {input, node}, result})
 const _r = value => () => value;
 
 const _b = node => (deps, compute) => {
-    let chain = Nothing;
-    // let newContext = undefined;
+    let computation = undefined;
+    let chain = undefined;
 
     return context => {
-        if (chain === Nothing) {
-            // ({context: newContext, result} = m(context));
-            // result = result.then(r => compute(r));
-            chain = deps(context).then(d => compute(d));
-        }
-        return chain.then(r => {
-            const result = r(context);
+        const chaining = comp => {
+            const result = comp(context);
             context.results.set(node, result)
             return result;
-        });
+        }
+
+        if (computation === undefined) {
+            const args = deps(context);
+            console.log(args);
+            if (isPromise(args)) {
+                computation = args.then(a => compute(a));
+                chain = comp => comp.then(chaining);
+            } else {
+                computation = compute(args);
+                chain = chaining;
+            }
+            // ({context: newContext, result} = m(context));
+            // result = result.then(r => compute(r));
+            // chain = deps(context).then(d => compute(d));
+        }
+        return chain(computation);
         // answer.then(a => context.results.set(node, a));
         // const newContext = {input: context.input, node};
         // return result.then(r => r(newContext));        
     }
 };
 
-const all = values => context => Promise.all(values.map(value => value(context)));
-// const all = values => context => ({
-//     context,
-//     result: Promise.all(values.map(value => value(context))),
-// });
+const zeroArgs = () => [];
+const all = values => {
+    if (values.length === 0) {
+        return zeroArgs;
+    }
+
+    return context => Promise.all(values.map(value => value(context)))
+};
 
 const _lifted = node => {
     const index = node.value;
     return context => context.input[index];
 }
-// const _lifted = node => {
-//     const index = node.value;
-//     return context => nodeResult(context, node, context.input[index]);
-// }
 
 const _sync = (node, builder) => {
     const {f, args: unresolved} = node;
     const monads = unresolved.map(builder.next);
 
+    if (monads.length === 1) {
+        return _b(node)(monads[0], result => _r(f(result)));
+    }
+
     return _b(node)(all(monads), results => _r(f(...results)));
 }
 
+const _service = (node, builder) => {
+    const {name, action, args: unresolved} = node;
+    const call = builder.getCall(name, action);
+    const monads = unresolved.map(builder.next);
+
+    if (monads.length === 1) {
+        return _b(node)(monads[0], result => _r(call(result)));
+    }
+
+    return _b(node)(all(monads), results => _r(call(...results)));
+};
+
+/*
 const waitArg = context => {
     const arg = context.node.args[0];
     return {input: context.input, node: arg, result: arg(context)};
 }
 
 const _singleService = call => _b(waitArg, arg => _r(call(arg)));
-
-const _service = (node, builder) => {
-    const {name, action, args: unresolved} = node;
-    const monads = unresolved.map(builder.next);
-    const call = builder.getCall(name, action);
-
-    return _b(node)(all(monads), results => _r(call(...results)));
-};
+*/
 
 /* --------------------------------------- */
 
@@ -95,17 +115,21 @@ const _s = new Map([
     ['user/get', id => Promise.resolve({id, type: 'User'})],
 ]);
 
-function next (node) {
+const choose = node => {
     if (node instanceof Lifted) {
-        return _lifted(node, this);
+        return _lifted;
     }
     if (node instanceof Sync) {
-        return _sync(node, this);
+        return _sync;
     }
     if (node instanceof ServiceCall) {
-        return _service(node, this);
+        return _service;
     }
     throw `тип не поддерживается: ${node}`;
+}
+
+function next (node) {
+    return choose(node)(node, this);
 }
 
 const cache = cached => next => node => {
@@ -133,7 +157,7 @@ const run = (plan, ...input) => {
     const context = {input, results: new Map()};
     const promise = plan(context);
     if (isPromise(promise)) {
-        promise.catch(() => null).then(() => console.dir(context, {depth: null}))
+        // promise.catch(() => null).then(() => console.dir(context, {depth: null}))
         return promise;
     }
     return Promise.resolve(promise);
@@ -142,4 +166,4 @@ const run = (plan, ...input) => {
 const plan = build(simple);
 // console.log(plan.toString());
 
-run(plan, 10, 20).then(console.log).catch(console.log);
+run(plan, 10, 10).then(console.log).catch(console.log);
