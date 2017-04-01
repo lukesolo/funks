@@ -19,15 +19,8 @@ const simple = lift((userId, itemId) => {
     return eq;
 });
 
-// const _call = (controller, action, args) => ({services}) => services(`${controller}/${action}`, args);
-
 /* --------------------------------------- */
 
-// const Nothing = Object.create(null);
-
-const nodeResult = ({input}, node, result) => ({context: {input, node}, result});
-
-// const _r = value => context => ({result: value, context});
 const _r = value => () => value;
 
 const _b = node => (deps, compute) => {
@@ -51,14 +44,8 @@ const _b = node => (deps, compute) => {
                 computation = compute(args);
                 chain = chaining;
             }
-            // ({context: newContext, result} = m(context));
-            // result = result.then(r => compute(r));
-            // chain = deps(context).then(d => compute(d));
         }
-        return chain(computation);
-        // answer.then(a => context.results.set(node, a));
-        // const newContext = {input: context.input, node};
-        // return result.then(r => r(newContext));        
+        return chain(computation);     
     }
 };
 
@@ -98,15 +85,6 @@ const _service = (node, builder) => {
 
     return _b(node)(all(monads), results => _r(call(...results)));
 };
-
-/*
-const waitArg = context => {
-    const arg = context.node.args[0];
-    return {input: context.input, node: arg, result: arg(context)};
-}
-
-const _singleService = call => _b(waitArg, arg => _r(call(arg)));
-*/
 
 /* --------------------------------------- */
 
