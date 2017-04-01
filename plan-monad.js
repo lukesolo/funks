@@ -18,7 +18,7 @@ const simple = lift((userId, itemId) => {
     const eq = sync((item, user) => item.id === user.id)(item, user);
     const text = or(eq, 'Равно')
         .or(good, 'Хорошо')
-        // .def(type);
+        .def(item);
 
     return text;
 });
@@ -113,7 +113,11 @@ const _or = (node, builder) => {
     const results = cases.map(c => builder.next(c.result));
     const def = results.length > preds.length ? results[results.length - 1] : builder.next(undefined);
 
-    return _b(node)(firstIndex(preds), index => index === -1 ? def : results[index]);
+    if (preds.length === 1) {
+        return _b(node)(preds[0], pred => pred ? results[0] : def);
+    }
+
+    return _b(node)(firstIndex(preds), index => index >= 0 ? results[index] : def);
 };
 
 /* --------------------------------------- */
@@ -182,4 +186,6 @@ const run = (plan, ...input) => {
 const plan = build(simple);
 // console.log(plan.toString());
 
+run(plan, 5, 2).then(console.log).catch(console.log);
 run(plan, 5, 0).then(console.log).catch(console.log);
+run(plan, 5, 5).then(console.log).catch(console.log);
