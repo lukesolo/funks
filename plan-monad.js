@@ -29,29 +29,22 @@ const simple = lift((userId, itemId) => {
 
 const _r = value => () => value;
 
-const _b = node => (deps, compute) => {
-    let computation = undefined;
-    let chain = undefined;
-
-    return context => {
-        const chaining = comp => {
-            const result = comp(context);
-            context.results.set(node, result)
-            return result;
-        }
-
-        if (computation === undefined) {
-            const args = deps(context);
-            if (isPromise(args)) {
-                computation = args.then(a => compute(a));
-                chain = comp => comp.then(chaining);
-            } else {
-                computation = compute(args);
-                chain = chaining;
-            }
-        }
-        return chain(computation);     
+const _b = node => (deps, compute) => context => {
+    if (context.results.has(node)) {
+        return context.results.get(node);
     }
+
+    const args = deps(context);
+    if (isPromise(args)) {
+        const result = args.then(a => compute(a)(context));
+        context.results.set(node, result);
+        result.then(r => context.results.set(node, r));
+        return result;
+    }
+
+    const result = compute(args)(context);
+    context.results.set(node, result);
+    return result;
 };
 
 const zeroArgs = () => [];
@@ -123,7 +116,7 @@ const _or = (node, builder) => {
 /* --------------------------------------- */
 
 const _s = new Map([
-    ['item/get', id => Promise.resolve({id, type: 'Item'})],
+    ['item/get', id => console.log('item/get') || Promise.resolve({id, type: 'Item'})],
     ['user/get', id => Promise.resolve({id, type: 'User'})],
 ]);
 
