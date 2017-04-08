@@ -18,18 +18,16 @@ const simple = lift((userId, itemId) => {
     const eq = sync((item, user) => item.id === user.id)(item, user);
     const text = or(eq, 'Равно')
         .or(good, 'Хорошо')
-        .def(item);
+        .def(hasType);
 
     return text;
 });
 
 /* --------------------------------------- */
 
-// const Nothing = Object.create(null);
+const end = value => () => value;
 
-const _r = value => () => value;
-
-const _b = node => (deps, compute) => context => {
+const chain = node => (deps, compute) => context => {
     if (context.results.has(node)) {
         return context.results.get(node);
     }
@@ -77,40 +75,40 @@ const _lifted = node => {
     return context => context.input[index];
 }
 
-const _sync = (node, builder) => {
+const _sync = (node, builder, chain) => {
     const {f, args: unresolved} = node;
     const monads = unresolved.map(builder.next);
 
     if (monads.length === 1) {
-        return _b(node)(monads[0], result => _r(f(result)));
+        return chain(monads[0], result => end(f(result)));
     }
 
-    return _b(node)(all(monads), results => _r(f(...results)));
+    return chain(all(monads), results => end(f(...results)));
 }
 
-const _service = (node, builder) => {
+const _service = (node, builder, chain) => {
     const {name, action, args: unresolved} = node;
     const call = builder.getCall(name, action);
     const monads = unresolved.map(builder.next);
 
     if (monads.length === 1) {
-        return _b(node)(monads[0], result => _r(call(result)));
+        return chain(monads[0], result => end(call(result)));
     }
 
-    return _b(node)(all(monads), results => _r(call(...results)));
+    return chain(all(monads), results => end(call(...results)));
 };
 
-const _or = (node, builder) => {
+const _or = (node, builder, chain) => {
     const {cases} = node;
     const preds = cases.filter(c => c.pred).map(c => builder.next(c.pred));
     const results = cases.map(c => builder.next(c.result));
     const def = results.length > preds.length ? results[results.length - 1] : builder.next(undefined);
 
     if (preds.length === 1) {
-        return _b(node)(preds[0], pred => pred ? results[0] : def);
+        return chain(preds[0], pred => pred ? results[0] : def);
     }
 
-    return _b(node)(firstIndex(preds), index => index >= 0 ? results[index] : def);
+    return chain(firstIndex(preds), index => index >= 0 ? results[index] : def);
 };
 
 /* --------------------------------------- */
@@ -133,11 +131,11 @@ const choose = node => {
     if (node instanceof Or) {
         return _or;
     }
-    return _r;
+    return end;
 }
 
 function next (node) {
-    return choose(node)(node, this);
+    return choose(node)(node, this, chain(node));
 }
 
 const cache = cached => next => node => {
@@ -180,5 +178,5 @@ const plan = build(simple);
 // console.log(plan.toString());
 
 run(plan, 5, 2).then(console.log).catch(console.log);
-run(plan, 5, 0).then(console.log).catch(console.log);
 run(plan, 5, 5).then(console.log).catch(console.log);
+run(plan, 5, 0).then(console.log).catch(console.log);
