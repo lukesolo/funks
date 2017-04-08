@@ -1,6 +1,6 @@
 'use strict';
 
-const {lift, service, sync, or, Lifted, Sync, ServiceCall, Or} = require('./lib/builder');
+const {lift, service, sync, or, onFail, Lifted, Sync, ServiceCall, Or, OnFail} = require('./lib/builder');
 const {walkObject} = require('./lib/visualize');
 
 const isPromise = p => p instanceof Object && 'then' in p;
@@ -8,16 +8,26 @@ const isPromise = p => p instanceof Object && 'then' in p;
 const getItem = service('item', 'get');
 const getUser = service('user', 'get');
 
+const logOnFail = onFail(err => console.log(err));
+
 const simple = lift((userId, itemId) => {
+    const magicUserId = logOnFail(sync(id => {throw id})(userId), userId);
+
     const item = getItem(itemId);
-    const user = getUser(userId);
+    const user = getUser(magicUserId);
     const type = sync(x => x.type)(user);
     const hasType = sync((user, type) => user.type === type)(user, type);
 
-    const good = sync(item => item.id > 0)(item);
+    const good = sync(item => {
+        if (item.id >= 100) {
+            throw 'Больше 100';
+        }
+        return item.id > 0;
+    })(item);
+    
     const eq = sync((item, user) => item.id === user.id)(item, user);
     const text = or(eq, 'Равно')
-        .or(good, 'Хорошо')
+        .or(logOnFail(good), 'Хорошо')
         .def(hasType);
 
     return text;
@@ -70,6 +80,19 @@ const firstIndex = values => context => {
     return choose(0);
 }
 
+const convertError = err => err instanceof Error ? err : new Error(err);
+const recover = expr => context => {
+    try {
+        const result = expr(context);
+        if (isPromise(result)) {
+            return result.catch(convertError);
+        }
+        return result;
+    } catch (err) {
+        return convertError(err);
+    }
+}
+
 const _lifted = node => {
     const index = node.value;
     return context => context.input[index];
@@ -111,6 +134,20 @@ const _or = (node, builder, chain) => {
     return chain(firstIndex(preds), index => index >= 0 ? results[index] : def);
 };
 
+const _onFail = (node, builder, chain) => {
+    const {callback} = node;
+    const expr = builder.next(node.expr);
+    const def = builder.next(node.def);
+
+    return chain(recover(expr), result => {
+        if (result instanceof Error) {
+            callback(result);
+            return def;
+        }
+        return end(result);
+    });
+};
+
 /* --------------------------------------- */
 
 const _s = new Map([
@@ -121,15 +158,14 @@ const _s = new Map([
 const choose = node => {
     if (node instanceof Lifted) {
         return _lifted;
-    }
-    if (node instanceof Sync) {
+    } else if (node instanceof Sync) {
         return _sync;
-    }
-    if (node instanceof ServiceCall) {
+    } else if (node instanceof ServiceCall) {
         return _service;
-    }
-    if (node instanceof Or) {
+    } else if (node instanceof Or) {
         return _or;
+    } else if (node instanceof OnFail) {
+        return _onFail;
     }
     return end;
 }
@@ -177,6 +213,7 @@ const run = (plan, ...input) => {
 const plan = build(simple);
 // console.log(plan.toString());
 
-run(plan, 5, 2).then(console.log).catch(console.log);
-run(plan, 5, 5).then(console.log).catch(console.log);
-run(plan, 5, 0).then(console.log).catch(console.log);
+// run(plan, 5, 2).then(console.log).catch(console.log);
+// run(plan, 5, 5).then(console.log).catch(console.log);
+// run(plan, 5, 0).then(console.log).catch(console.log);
+run(plan, 5, 1000).then(console.log).catch(console.log);
