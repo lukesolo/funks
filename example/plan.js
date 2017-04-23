@@ -3,8 +3,8 @@
 const {lift, service, sync, or, onFail, _register} = require('../lib/builder');
 const {build, run} = require('../lib/plan');
 
-const getItem = service('item', 'get');
-const getUser = service('user', 'get');
+const getItem = service('item.get');
+const getUser = service('user.get');
 
 const logOnFail = onFail(err => console.log(err));
 
