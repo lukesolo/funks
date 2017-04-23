@@ -2,13 +2,13 @@
 
 const {lift, service, sync, or} = require('../lib/builder');
 
-const getPublication = service('publications', 'forItem');
-const getUser = service('users', 'get');
-const selectUsers = service('users', 'select');
-const getBids = service('bids', 'forPublication');
-const getDeletedBidsCount = service('bids', 'deletedCount');
-const getNextPrice = service('bids', 'getNext');
-const getSomeText = service('someText', 'for');
+const getPublication = service('publications.forItem');
+const getUser = service('users.get');
+const selectUsers = service('users.select');
+const getBids = service('bids.forPublication');
+const getDeletedBidsCount = service('bids.deletedCount');
+const getNextPrice = service('bids.getNext');
+const getSomeText = service('someText.for');
 
 const mapIds = sync(xs => xs.map(x => x.id));
 

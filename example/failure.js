@@ -2,8 +2,8 @@
 
 const {lift, service, sync, or, onFail} = require('../lib/builder');
 
-const getPublication = service('publications', 'forItem');
-const getUser = service('users', 'get');
+const getPublication = service('publications.forItem');
+const getUser = service('users.get');
 
 const logOnFail = onFail(err => console.log(err));
 
