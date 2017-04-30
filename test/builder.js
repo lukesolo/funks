@@ -2,7 +2,8 @@
 
 const assert = require('assert');
 
-const {isPure, ServiceCall, Lifted, Sync, Or, OnFail, Ext} = require('../lib/builder');
+const {isPure, ServiceCall, Lifted, Sync, Or, OnFail, Ext,
+    service, _register} = require('../lib/builder');
 
 describe('helper "isPure"', () => {
     describe('for all builder elements', () => {
@@ -25,6 +26,26 @@ describe('helper "isPure"', () => {
             assert.strictEqual(isPure(''), true);
             assert.strictEqual(isPure([]), true);
             assert.strictEqual(isPure({}), true);
+        });
+    });
+});
+
+describe('function "_register"', () => {
+    describe('with key and value args', () => {
+        it('should register', () => {
+            _register('with key and value args', x => x);
+            const call = service('with key and value args');
+            assert.ok(call);
+        });
+    });
+
+    describe('with map', () => {
+        it('should register', () => {
+            _register(new Map([
+                ['with map', x => x],
+            ]));
+            const call = service('with map');
+            assert.ok(call);
         });
     });
 });
