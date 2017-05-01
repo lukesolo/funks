@@ -1,6 +1,6 @@
 {
   "name": "funk",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Asynchronous model builder in functional style.",
   "main": "index.js",
   "directories": {
