@@ -1,10 +1,12 @@
 {
-  "name": "funk",
+  "name": "funks",
   "version": "1.2.0",
   "description": "Asynchronous model builder in functional style.",
   "main": "index.js",
   "directories": {
-    "example": "example"
+    "example": "example",
+    "lib": "lib",
+    "test": "test"
   },
   "devDependencies": {
     "mocha": "^3.3.0"
