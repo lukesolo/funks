@@ -2,8 +2,10 @@
 
 const assert = require('assert');
 
-const {isPure, ServiceCall, Lifted, Sync, Or, OnFail, Ext,
-    service, _register} = require('../lib/builder');
+const {
+    isPure, ServiceCall, Lifted, Sync, Or, OnFail, Ext,
+    lift, sync, or, ext, onFail, service, _register,
+} = require('../lib/builder');
 
 describe('helper "isPure"', () => {
     describe('for all builder elements', () => {
@@ -46,6 +48,48 @@ describe('function "_register"', () => {
             ]));
             const call = service('with map');
             assert.ok(call);
+        });
+    });
+});
+
+describe('validation', () => {
+    describe('of function "lift"', () => {
+        it('should pass for function', () => {
+            lift(() => null);
+        });
+
+        it('should fail for not function', () => {
+            assert.throws(() => lift(null));
+        });
+    });
+
+    describe('of function "sync"', () => {
+        it('should pass for function', () => {
+            sync(() => null);
+        });
+
+        it('should fail for not function', () => {
+            assert.throws(() => sync(null));
+        });
+    });
+
+    describe('of function "onFail"', () => {
+        it('should pass for function', () => {
+            onFail(() => null);
+        });
+
+        it('should fail for not function', () => {
+            assert.throws(() => onFail(null));
+        });
+    });
+
+    describe('of function "ext"', () => {
+        it('should pass for function', () => {
+            ext(() => null);
+        });
+
+        it('should fail for not function', () => {
+            assert.throws(() => ext(null));
         });
     });
 });
