@@ -1,6 +1,6 @@
 {
   "name": "funks",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Asynchronous model builder in functional style.",
   "main": "index.js",
   "directories": {
@@ -16,12 +16,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lukesolo/funk.git"
+    "url": "git+https://github.com/lukesolo/funks.git"
   },
   "author": "lukesolo",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/lukesolo/funk/issues"
+    "url": "https://github.com/lukesolo/funks/issues"
   },
-  "homepage": "https://github.com/lukesolo/funk#readme"
+  "homepage": "https://github.com/lukesolo/funks#readme"
 }
