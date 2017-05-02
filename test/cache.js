@@ -23,21 +23,30 @@ const multiArg = service('multi_arg');
 const multiArgument = lift((a, b, c, d) => [multiArg(a, b, c, d), multiArg(a, b, c, d)]);
 const runMultiArg = run.bind(null, build(multiArgument));
 
+_register('same_arg_a', x => `${x}_a`);
+_register('same_arg_b', x => `${x}_b`);
+const sameArg = lift(x => [service('same_arg_a')(x), service('same_arg_b')(x)]);
+const runSameArg = run.bind(null, build(sameArg));
+
 describe('Service call', () => {
-    describe('with same argument', () => {
-        it('should be cached', () => {
-            return runOneArg(42).then(result => {
-                assert.deepStrictEqual([42, 42], result);
-                assert.strictEqual(1, oneArgCallCount);
-            });
+    it('with same argument should be cached', () => {
+        return runOneArg(42).then(result => {
+            assert.deepStrictEqual([42, 42], result);
+            assert.strictEqual(1, oneArgCallCount);
         });
     });
 
-    describe('with same multiple arguments', () => {
-        it('should be cached', () => {
-            return runMultiArg(1, '2', [3], {4: 4}).then(result => {
-                assert.deepStrictEqual([[1, '2', [3], {4: 4}], [1, '2', [3], {4: 4}]], result);
-                assert.strictEqual(1, oneArgCallCount);
+    it('with same multiple arguments should be cached', () => {
+        return runMultiArg(1, '2', [3], {4: 4}).then(result => {
+            assert.deepStrictEqual([[1, '2', [3], {4: 4}], [1, '2', [3], {4: 4}]], result);
+            assert.strictEqual(1, oneArgCallCount);
+        });
+    });
+    
+    describe('to different services', () => {
+        it('with same argument should be different', () => {
+            return runSameArg('arg').then(result => {
+                assert.deepStrictEqual(['arg_a', 'arg_b'], result);
             });
         });
     });
