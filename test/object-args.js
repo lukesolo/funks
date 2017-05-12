@@ -20,7 +20,10 @@ const defArrayExample = build(lift((value1, value2) =>
     or(false, false).def([value1, value2])));
 
 const onFailArrayExample = build(lift((value1, value2) =>
+    onFail(x => null)([value1, value2])));
+const onFailDefArrayExample = build(lift((value1, value2) =>
     onFail(x => null)(fail(), [value1, value2])));
+
 
 const liftObjectExample = build(lift((value1, value2) => ({value1, value2})));
 const syncObjectExample = build(lift((value1, value2) => id({value1, value2})));
@@ -31,6 +34,8 @@ const defObjectExample = build(lift((value1, value2) =>
     or(false, false).def({value1, value2})));
 
 const onFailObjectExample = build(lift((value1, value2) =>
+    onFail(x => null)({value1, value2})));
+const onFailDefObjectExample = build(lift((value1, value2) =>
     onFail(x => null)(fail(), {value1, value2})));
 
 
@@ -76,6 +81,11 @@ describe('On object of arguments', () => {
             return run(onFailArrayExample, 1, 2)
                 .then(result => assert.deepStrictEqual(result, [1, 2]));
         });
+
+        it('default value for "onFail" should be calculated', () => {
+            return run(onFailDefArrayExample, 1, 2)
+                .then(result => assert.deepStrictEqual(result, [1, 2]));
+        });
     });
 
     describe('with plain object type', () => {
@@ -101,6 +111,11 @@ describe('On object of arguments', () => {
 
         it('"onFail" should be calculated', () => {
             return run(onFailObjectExample, 1, 2)
+                .then(result => assert.deepStrictEqual(result, {value1: 1, value2: 2}));
+        });
+
+        it('default value for "onFail" should be calculated', () => {
+            return run(onFailDefObjectExample, 1, 2)
                 .then(result => assert.deepStrictEqual(result, {value1: 1, value2: 2}));
         });
     });
