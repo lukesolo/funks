@@ -11,6 +11,7 @@ const id = sync(x => x);
 const fail = sync(x => { throw new Error(x); });
 const echoService = service('object-args');
 
+const liftArrayExample = build(lift((value1, value2) => [value1, value2]));
 const syncArrayExample = build(lift((value1, value2) => id([value1, value2])));
 const serviceArrayExample = build(lift((value1, value2) => echoService([value1, value2])));
 
@@ -21,7 +22,7 @@ const defArrayExample = build(lift((value1, value2) =>
 const onFailArrayExample = build(lift((value1, value2) =>
     onFail(x => null)(fail(), [value1, value2])));
 
-
+const liftObjectExample = build(lift((value1, value2) => ({value1, value2})));
 const syncObjectExample = build(lift((value1, value2) => id({value1, value2})));
 const serviceObjectExample = build(lift((value1, value2) => echoService({value1, value2})));
 
@@ -32,6 +33,22 @@ const defObjectExample = build(lift((value1, value2) =>
 const onFailObjectExample = build(lift((value1, value2) =>
     onFail(x => null)(fail(), {value1, value2})));
 
+
+describe('"lift" with result', () => {
+    describe('of array type', () => {
+        it('should be calculated', () => {
+            return run(liftArrayExample, 1, 2)
+                .then(result => assert.deepStrictEqual(result, [1, 2]));
+        });
+    });
+
+    describe('of object type', () => {
+        it('should be calculated', () => {
+            return run(liftObjectExample, 1, 2)
+                .then(result => assert.deepStrictEqual(result, {value1: 1, value2: 2}));
+        });
+    });
+});
 
 describe('On object of arguments', () => {
     describe('with array type', () => {
