@@ -10,12 +10,12 @@ const {
 describe('helper "isPure"', () => {
     describe('for all builder elements', () => {
         it('should return false', () => {
-            assert.strictEqual(isPure(new ServiceCall), false);
-            assert.strictEqual(isPure(new Lifted), false);
-            assert.strictEqual(isPure(new Sync), false);
-            assert.strictEqual(isPure(new Or), false);
-            assert.strictEqual(isPure(new OnFail), false);
-            assert.strictEqual(isPure(new Ext), false);
+            assert.strictEqual(isPure(Object.create(ServiceCall.prototype)), false);
+            assert.strictEqual(isPure(Object.create(Lifted.prototype)), false);
+            assert.strictEqual(isPure(Object.create(Sync.prototype)), false);
+            assert.strictEqual(isPure(Object.create(Or.prototype)), false);
+            assert.strictEqual(isPure(Object.create(OnFail.prototype)), false);
+            assert.strictEqual(isPure(Object.create(Ext.prototype)), false);
         });
     });
 
