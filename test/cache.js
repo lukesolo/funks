@@ -8,7 +8,7 @@ const {build, run} = require('../lib/plan');
 let oneArgCallCount = 0;
 _register('one_arg', x => {
     oneArgCallCount++;
-    return x;
+    return Promise.resolve(x);
 });
 const oneArg = service('one_arg');
 const singleArgument = lift(value => [oneArg(value), oneArg(value)]);
@@ -17,14 +17,14 @@ const runOneArg = run.bind(null, build(singleArgument));
 let multiArgCallCount = 0;
 _register('multi_arg', (...args) => {
     multiArgCallCount++;
-    return args;
+    return Promise.resolve(args);
 });
 const multiArg = service('multi_arg');
 const multiArgument = lift((a, b, c, d) => [multiArg(a, b, c, d), multiArg(a, b, c, d)]);
 const runMultiArg = run.bind(null, build(multiArgument));
 
-_register('same_arg_a', x => `${x}_a`);
-_register('same_arg_b', x => `${x}_b`);
+_register('same_arg_a', x => Promise.resolve(`${x}_a`));
+_register('same_arg_b', x => Promise.resolve(`${x}_b`));
 const sameArg = lift(x => [service('same_arg_a')(x), service('same_arg_b')(x)]);
 const runSameArg = run.bind(null, build(sameArg));
 
