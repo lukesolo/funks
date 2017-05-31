@@ -6,7 +6,24 @@ Asynchronous model builder in functional style.
 
 ### lift
 
-Is a function that takes pure function which describes process of creating independent block of data.
+The function *lift* takes pure function which describes process of creating independent block of data.
+All nondeterministic functions should be wrapped in *sync* function. For example:
+```javascript
+const getStatsUntil = service('stats.getUntil');
+
+const someStats = lift(() => {
+    // In this instance "now" will be captured once,
+    // and for every call of "someStats" function getStatsUntil would get the same date.
+    const now = new Date();
+    return getStatsUntil(now);
+});
+
+const someStats2 = lift(() => {
+    // In this instance "now" will be calculated for every call of "someStats2"
+    const now = sync(() => new Date());
+    return getStatsUntil(now);
+});
+```
 
 ### service
 ```
