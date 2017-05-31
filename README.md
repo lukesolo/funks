@@ -27,13 +27,13 @@ const someStats2 = lift(() => {
 
 ### service
 ```
-service :: key -> (...args) -> ServiceCall
+service :: key -> *... -> ServiceCall a
 ```
 Service is a curried function, that takes key and arguments and after that returns object, which contains information about particular service call. 
 
 ### sync
 ```
-sync :: fn -> (...args) -> SyncComputation
+sync :: (*... -> a) -> *... -> Sync a
 ```
 Sync is a curried function, that firstly takes synchronous function then takes arguments and returns object, which describes non async computation.
 
