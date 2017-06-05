@@ -72,3 +72,37 @@ const balloon =
 
 const valueOrUndefined = or(exists, create());
 ```
+
+### ext
+```
+ext :: (*... -> NotPromise a) -> *... -> Ext a
+```
+Takes function which doesn't return promise and should calculated with alternative way.
+For example if you use coroutines based on generators.
+```javascript
+const genEcho = function *(value) {
+    yield 'simulating calculation';
+    return value;
+};
+
+const extEcho = ext(genEcho);
+
+lift(value => {
+    const result = extEcho(value);
+    return sync(r => `Server respond: ${r}`)(result);
+});
+```
+
+External handlers should be added using function *registerExt*.
+For example:
+```javascript
+const {registerExt} = require('funks').plan;
+const co = require('co');
+
+const genConstructor = (function *() {})().constructor;
+
+const coHandle = value => co(value);
+const coCanHandle = value => value && value.constructor === genConstructor;
+
+registerExt(coCanHandle, coHandle);
+```
